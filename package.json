@@ -1,0 +1,56 @@
+{
+  "name": "vite-plugin-svg-srcset",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./client": {
+      "types": "./client.d.ts"
+    }
+  },
+  "homepage": "https://github.com/arma-events/vite-plugin-svg-srcset#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arma-events/vite-plugin-svg-srcset.git"
+  },
+  "files": [
+    "dist",
+    "client.d.ts"
+  ],
+  "bugs": {
+    "url": "https://github.com/arma-events/vite-plugin-svg-srcset/issues",
+    "email": "derzade@gmail.com"
+  },
+  "scripts": {
+    "build": "unbuild",
+    "lint": "eslint --ext .js,.ts ./src",
+    "fmt": "prettier --write .",
+    "prepare": "npm run build"
+  },
+  "keywords": [],
+  "author": "Jonas Schade <derzade@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.9.2",
+    "@typescript-eslint/eslint-plugin": "^6.11.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "prettier": "^3.1.0",
+    "typescript": "^5.2.2",
+    "unbuild": "^2.0.0"
+  },
+  "peerDependencies": {
+    "vite": "4 - 5"
+  },
+  "dependencies": {
+    "sharp": "^0.32.6"
+  }
+}

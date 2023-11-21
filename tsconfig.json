@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "target": "ES2020",
+        "module": "ES2020",
+        "moduleResolution": "Node",
+        "lib": [
+            "es2022"
+        ],
+        "strict": true,
+        "noImplicitReturns": true,
+        "declaration": true,
+        "sourceMap": true,
+        "noUnusedLocals": true,
+        "esModuleInterop": true,
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
