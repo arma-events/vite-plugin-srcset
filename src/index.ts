@@ -46,21 +46,29 @@ type SvgSrcsetPluginConfig = Array<{
      * @default [64, 128, 256, 512, 1024]
      */
     outputWidths?: number[];
+
+    /**
+     * Prefix of the name of the output assets
+     */
+    assetNamePrefix?: string;
 }>;
 
 export default function svgSrcSetPlugin(options: SvgSrcsetPluginConfig = []): Plugin {
-    function findConfig(id: string): Required<Pick<SvgSrcsetPluginConfig[number], 'outputFormats' | 'outputWidths'>> {
-        for (const { exclude, include, outputFormats, outputWidths } of options) {
+    function findConfig(
+        id: string
+    ): Required<Pick<SvgSrcsetPluginConfig[number], 'outputFormats' | 'outputWidths' | 'assetNamePrefix'>> {
+        for (const { exclude, include, outputFormats, outputWidths, assetNamePrefix } of options) {
             const filter = createFilter(include, exclude);
 
             if (filter(id))
                 return {
                     outputFormats: outputFormats ?? DEFAULT_FORMATS,
-                    outputWidths: outputWidths ?? DEFAULT_WIDTHS
+                    outputWidths: outputWidths ?? DEFAULT_WIDTHS,
+                    assetNamePrefix: assetNamePrefix ?? ''
                 };
         }
 
-        return { outputFormats: DEFAULT_FORMATS, outputWidths: DEFAULT_WIDTHS };
+        return { outputFormats: DEFAULT_FORMATS, outputWidths: DEFAULT_WIDTHS, assetNamePrefix: '' };
     }
 
     let viteCommand: 'build' | 'serve' = 'serve';
@@ -101,7 +109,8 @@ export default function svgSrcSetPlugin(options: SvgSrcsetPluginConfig = []): Pl
             const svg = await readFile(idWithoutParams);
 
             const baseName = parse(id).name;
-            const getName = (width: number, format: string) => `${baseName}_${width}.${format}`;
+            const getName = (width: number, format: string) =>
+                `${config.assetNamePrefix}${baseName}_${width}.${format}`;
 
             const promises = (['webp', 'png', 'jpeg'] as const).map(async (format) => {
                 if (!config.outputFormats[format]) return undefined;
