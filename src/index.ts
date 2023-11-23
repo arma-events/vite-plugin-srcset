@@ -50,12 +50,12 @@ type SvgSrcsetPluginConfig = Array<{
 
 export default function svgSrcSetPlugin(options: SvgSrcsetPluginConfig = []): Plugin {
     function findConfig(id: string): Required<Pick<SvgSrcsetPluginConfig[number], 'outputFormats' | 'outputWidths'>> {
-        for (const { exclude, include, outputFormats: outputFormat, outputWidths } of options) {
+        for (const { exclude, include, outputFormats, outputWidths } of options) {
             const filter = createFilter(include, exclude);
 
             if (filter(id))
                 return {
-                    outputFormats: outputFormat ?? DEFAULT_FORMATS,
+                    outputFormats: outputFormats ?? DEFAULT_FORMATS,
                     outputWidths: outputWidths ?? DEFAULT_WIDTHS
                 };
         }
