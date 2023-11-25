@@ -17,7 +17,6 @@ const DEFAULT_FORMATS = { png: true, webp: true };
 
 export const SUFFIX = '?srcset';
 
-
 export async function renderImg(original: Buffer, width: number, format: 'png' | 'jpeg' | 'webp'): Promise<Uint8Array> {
     return sharp(original).resize(width)[format]().toBuffer();
 }
@@ -148,10 +147,10 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
                         type: x.type,
                         srcset: ESLiteral(
                             '`' +
-                            x.srcset
-                                .map(({ w, ref }) => `\${import.meta.ROLLUP_FILE_URL_${ref}} ${w}w`)
-                                .join(', ') +
-                            '`'
+                                x.srcset
+                                    .map(({ w, ref }) => `\${import.meta.ROLLUP_FILE_URL_${ref}} ${w}w`)
+                                    .join(', ') +
+                                '`'
                         )
                     })),
                     fallback: ESLiteral(`import.meta.ROLLUP_FILE_URL_${fallbackRef}`)
