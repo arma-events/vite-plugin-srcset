@@ -1,4 +1,4 @@
-declare module '*.svg?srcset' {
+declare module '*?srcset' {
     type ModuleExport = import('./dist/index').ModuleExport;
 
     const src: ModuleExport;

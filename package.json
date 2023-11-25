@@ -1,5 +1,5 @@
 {
-  "name": "vite-plugin-svg-srcset",
+  "name": "vite-plugin-srcset",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/index.cjs",
@@ -16,17 +16,17 @@
       "types": "./client.d.ts"
     }
   },
-  "homepage": "https://github.com/arma-events/vite-plugin-svg-srcset#readme",
+  "homepage": "https://github.com/arma-events/vite-plugin-srcset#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/arma-events/vite-plugin-svg-srcset.git"
+    "url": "https://github.com/arma-events/vite-plugin-srcset.git"
   },
   "files": [
     "dist",
     "client.d.ts"
   ],
   "bugs": {
-    "url": "https://github.com/arma-events/vite-plugin-svg-srcset/issues",
+    "url": "https://github.com/arma-events/vite-plugin-srcset/issues",
     "email": "derzade@gmail.com"
   },
   "scripts": {
@@ -39,6 +39,7 @@
   "author": "Jonas Schade <derzade@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@types/mime": "^3.0.4",
     "@types/node": "^20.9.2",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
     "eslint-config-prettier": "^9.0.0",
@@ -51,6 +52,7 @@
     "vite": "4 - 5"
   },
   "dependencies": {
+    "mime": "^3.0.0",
     "sharp": "^0.32.6"
   }
 }

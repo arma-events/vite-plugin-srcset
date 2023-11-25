@@ -1,13 +1,12 @@
 import { createFilter, type Plugin } from 'vite';
 import { ESLiteral, toESString } from './utils/toESString';
-import { renderSvg } from './utils/renderSvg';
 import { readFile } from 'node:fs/promises';
 import { parse } from 'node:path';
-
-export type ImageType = 'image/png' | 'image/webp' | 'image/jpeg' | 'image/svg+xml';
+import sharp from 'sharp';
+import mime from 'mime';
 
 export interface ModuleExport {
-    sources: Array<{ type: ImageType; srcset: string }>;
+    sources: Array<{ type: string; srcset: string }>;
     fallback: string;
     // TODO:
     // all: Record<ImageType, Record<number, string>>;
@@ -16,9 +15,14 @@ export interface ModuleExport {
 const DEFAULT_WIDTHS = [64, 128, 256, 512, 1024];
 const DEFAULT_FORMATS = { png: true, webp: true };
 
-export const SUFFIX = '.svg?srcset';
+export const SUFFIX = '?srcset';
 
-type SvgSrcsetPluginConfig = Array<{
+
+export async function renderImg(original: Buffer, width: number, format: 'png' | 'jpeg' | 'webp'): Promise<Uint8Array> {
+    return sharp(original).resize(width)[format]().toBuffer();
+}
+
+type SrcsetPluginConfig = Array<{
     /**
      * A [picomatch pattern](https://github.com/micromatch/picomatch), or array of patterns, which
      * specifies the files in the build the plugin should operate on. By default all files are targeted.
@@ -53,10 +57,10 @@ type SvgSrcsetPluginConfig = Array<{
     assetNamePrefix?: string;
 }>;
 
-export default function svgSrcSetPlugin(options: SvgSrcsetPluginConfig = []): Plugin {
+export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
     function findConfig(
         id: string
-    ): Required<Pick<SvgSrcsetPluginConfig[number], 'outputFormats' | 'outputWidths' | 'assetNamePrefix'>> {
+    ): Required<Pick<SrcsetPluginConfig[number], 'outputFormats' | 'outputWidths' | 'assetNamePrefix'>> {
         for (const { exclude, include, outputFormats, outputWidths, assetNamePrefix } of options) {
             const filter = createFilter(include, exclude);
 
@@ -74,7 +78,7 @@ export default function svgSrcSetPlugin(options: SvgSrcsetPluginConfig = []): Pl
     let viteCommand: 'build' | 'serve' = 'serve';
 
     return {
-        name: 'svg-srcset',
+        name: 'srcset',
         enforce: 'pre',
         config(config, { command }) {
             viteCommand = command;
@@ -87,26 +91,26 @@ export default function svgSrcSetPlugin(options: SvgSrcsetPluginConfig = []): Pl
             const idWithoutParams = new URL(id, import.meta.url).pathname;
 
             if (viteCommand === 'serve') {
-                // we just serve the svg during dev server operation
+                // we just serve the image during dev server operation
                 return {
-                    code: `import svgUrl from '${idWithoutParams}?url';
+                    code: `import imgUrl from '${idWithoutParams}?url';
     
                     export default ${toESString({
                         sources: [
                             {
                                 srcset: ESLiteral(
-                                    '`' + config.outputWidths.map((w) => `\${svgUrl} ${w}w`).join(', ') + '`'
+                                    '`' + config.outputWidths.map((w) => `\${imgUrl} ${w}w`).join(', ') + '`'
                                 ),
-                                type: 'image/svg+xml'
+                                type: mime.getType(idWithoutParams) ?? ''
                             }
                         ],
-                        fallback: ESLiteral('svgUrl')
+                        fallback: ESLiteral('imgUrl')
                     } satisfies ModuleExport)}`
                 };
             }
 
             const widths = config.outputWidths.sort((a, b) => a - b);
-            const svg = await readFile(idWithoutParams);
+            const original = await readFile(idWithoutParams);
 
             const baseName = parse(id).name;
             const getName = (width: number, format: string) =>
@@ -119,7 +123,7 @@ export default function svgSrcSetPlugin(options: SvgSrcsetPluginConfig = []): Pl
                     type: `image/${format}` as const,
                     srcset: await Promise.all(
                         widths.map(async (w) => {
-                            const buffer = await renderSvg(svg, w, format);
+                            const buffer = await renderImg(original, w, format);
                             const ref = this.emitFile({ type: 'asset', name: getName(w, format), source: buffer });
 
                             return { w, ref };
@@ -144,10 +148,10 @@ export default function svgSrcSetPlugin(options: SvgSrcsetPluginConfig = []): Pl
                         type: x.type,
                         srcset: ESLiteral(
                             '`' +
-                                x.srcset
-                                    .map(({ w, ref }) => `\${import.meta.ROLLUP_FILE_URL_${ref}} ${w}w`)
-                                    .join(', ') +
-                                '`'
+                            x.srcset
+                                .map(({ w, ref }) => `\${import.meta.ROLLUP_FILE_URL_${ref}} ${w}w`)
+                                .join(', ') +
+                            '`'
                         )
                     })),
                     fallback: ESLiteral(`import.meta.ROLLUP_FILE_URL_${fallbackRef}`)
