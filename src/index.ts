@@ -17,8 +17,12 @@ const DEFAULT_FORMATS = { png: true, webp: true };
 
 export const SUFFIX = '?srcset';
 
-export async function renderImg(original: Buffer, width: number, format: 'png' | 'jpeg' | 'webp'): Promise<Uint8Array> {
-    return sharp(original).resize(width)[format]().toBuffer();
+export async function renderImg(
+    original: Buffer,
+    width: number,
+    format: 'png' | 'jpeg' | 'webp' | 'avif' | 'jxl'
+): Promise<Uint8Array> {
+    return sharp(original).resize(width)[format]({ quality: 100, lossless: true }).toBuffer();
 }
 
 type SrcsetPluginConfig = Array<{
@@ -42,6 +46,8 @@ type SrcsetPluginConfig = Array<{
         png?: boolean;
         webp?: boolean;
         jpeg?: boolean;
+        avif?: boolean;
+        jxl?: boolean;
     };
 
     /**
@@ -115,7 +121,7 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
             const getName = (width: number, format: string) =>
                 `${config.assetNamePrefix}${baseName}_${width}.${format}`;
 
-            const promises = (['webp', 'png', 'jpeg'] as const).map(async (format) => {
+            const promises = (['avif', 'jxl', 'webp', 'jpeg', 'png'] as const).map(async (format) => {
                 if (!config.outputFormats[format]) return undefined;
 
                 return {
