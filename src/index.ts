@@ -121,10 +121,9 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
             const getName = (width: number, format: string) =>
                 `${config.assetNamePrefix}${baseName}_${width}.${format}`;
 
-            const promises = (['avif', 'jxl', 'webp', 'jpeg', 'png'] as const).map(async (format) => {
-                if (!config.outputFormats[format]) return undefined;
-
-                return {
+            const promises = (['avif', 'jxl', 'webp', 'jpeg', 'png'] as const)
+                .filter((f) => config.outputFormats[f])
+                .map(async (format) => ({
                     type: `image/${format}` as const,
                     srcset: await Promise.all(
                         widths.map(async (w) => {
@@ -134,12 +133,9 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
                             return { w, ref };
                         })
                     )
-                };
-            });
+                }));
 
-            const output = (await Promise.all(promises)).filter(
-                (x): x is Exclude<Awaited<(typeof promises)[number]>, undefined> => x !== undefined
-            );
+            const output = await Promise.all(promises);
 
             const fallbackRef = output.at(-1)?.srcset.at(-1)?.ref;
 
