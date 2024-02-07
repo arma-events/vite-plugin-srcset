@@ -91,9 +91,9 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
         async load(id) {
             if (!id.endsWith(SUFFIX)) return null;
 
-            const config = findConfig(id);
-
             const idWithoutParams = new URL(id, import.meta.url).pathname;
+
+            const config = findConfig(idWithoutParams);
 
             if (viteCommand === 'serve') {
                 // we just serve the image during dev server operation
