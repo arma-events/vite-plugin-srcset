@@ -33,6 +33,7 @@
     "build": "unbuild",
     "lint": "eslint --ext .js,.ts ./src",
     "fmt": "prettier --write .",
+    "type-check": "tsc --noEmit",
     "prepare": "npm run build"
   },
   "keywords": [
