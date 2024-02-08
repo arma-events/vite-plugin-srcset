@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-srcset",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Vite plugin for the automatic generation of images in various formats and widths, for use in srcsets of <picture>- or <img>-elements.",
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
