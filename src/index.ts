@@ -1,7 +1,7 @@
 import { createFilter, type Plugin } from 'vite';
 import { ESLiteral, toESString } from './utils/toESString';
 import { readFile } from 'node:fs/promises';
-import { parse } from 'node:path';
+import { parse, basename } from 'node:path';
 import sharp from 'sharp';
 import mime from 'mime';
 
@@ -95,10 +95,12 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
 
             const config = findConfig(idWithoutParams);
 
+            const importPath = './' + basename(idWithoutParams);
+
             if (viteCommand === 'serve') {
                 // we just serve the image during dev server operation
                 return {
-                    code: `import imgUrl from '${idWithoutParams}?url';
+                    code: `import imgUrl from '${importPath}?url';
     
                     export default ${toESString({
                         sources: [
