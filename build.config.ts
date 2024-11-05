@@ -6,6 +6,9 @@ export default defineBuildConfig({
     externals: ['vite'],
     declaration: true,
     rollup: {
-        emitCJS: true
+        emitCJS: true,
+        output: {
+            exports: 'named'
+        }
     }
 });
