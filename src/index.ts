@@ -82,7 +82,7 @@ type SrcsetPluginConfig = Array<{
     loadFile?(this: PluginContext, id: string): Promise<{ contents: Uint8Array }>;
 }>;
 
-export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
+export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
     function findConfig(
         id: string
     ): Required<Pick<SrcsetPluginConfig[number], 'outputFormats' | 'outputWidths' | 'assetNamePrefix' | 'loadFile'>> {

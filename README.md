@@ -43,7 +43,7 @@ npm i --save-dev vite-plugin-srcset
     import srcset from 'vite-plugin-srcset';
 
     export default defineConfig({
-        plugins: [srcset([
+        plugins: [srcset(
             {
                 // config 1 (see below for list of options)
             },
@@ -51,7 +51,7 @@ npm i --save-dev vite-plugin-srcset
                 // config 2 (see below for list of options)
             },
             // [...]
-        ])]
+        )]
     });
     ```
 
