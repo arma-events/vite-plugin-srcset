@@ -14,14 +14,19 @@ export interface ModuleExport {
 
 const DEFAULT_WIDTHS = [64, 128, 256, 512, 1024];
 const DEFAULT_FORMATS = { png: true, webp: true };
+const DEFAULT_FILE_LOADER = (id: string): Promise<{ contents: Uint8Array }> =>
+    readFile(new URL(id, import.meta.url).pathname).then((contents) => ({ contents }));
 
 export async function renderImg(
-    original: Buffer,
+    original: Uint8Array,
     width: number,
     format: 'png' | 'jpeg' | 'webp' | 'avif' | 'jxl'
 ): Promise<Uint8Array> {
     return sharp(original).resize(width)[format]({ quality: 100, lossless: true }).toBuffer();
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PluginContext = ThisParameterType<Extract<Plugin['load'], (...params: any[]) => any>>;
 
 type SrcsetPluginConfig = Array<{
     /**
@@ -58,24 +63,47 @@ type SrcsetPluginConfig = Array<{
      * Prefix of the name of the output assets
      */
     assetNamePrefix?: string;
+
+    /**
+     * Overwrite the default file loader. This can be useful if you want to modify or process the file
+     * before generating srcsets.
+     * @param {string} id Id of file to load (includes srcset search param as well as all other search params)
+     * @returns {Promise<{ contents: Uint8Array }>} A promise that resolves to the loaded file
+     *
+     * @example
+     *     // Change fill color in SVGs from black to white:
+     *     async function loadFile(id: string) {
+     *           const fsPath = new URL(id, import.meta.url).pathname;
+     *           let text = await readFile(fsPath, 'utf-8');
+     *           text = text.replaceAll('fill="#000000"', 'fill="#FFFFFF"');
+     *           return { contents: Buffer.from(text, 'utf-8') };
+     *     }
+     */
+    loadFile?(this: PluginContext, id: string): Promise<{ contents: Uint8Array }>;
 }>;
 
 export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
     function findConfig(
         id: string
-    ): Required<Pick<SrcsetPluginConfig[number], 'outputFormats' | 'outputWidths' | 'assetNamePrefix'>> {
-        for (const { exclude, include, outputFormats, outputWidths, assetNamePrefix } of options) {
+    ): Required<Pick<SrcsetPluginConfig[number], 'outputFormats' | 'outputWidths' | 'assetNamePrefix' | 'loadFile'>> {
+        for (const { exclude, include, outputFormats, outputWidths, assetNamePrefix, loadFile } of options) {
             const filter = createFilter(include, exclude);
 
             if (filter(id))
                 return {
                     outputFormats: outputFormats ?? DEFAULT_FORMATS,
                     outputWidths: outputWidths ?? DEFAULT_WIDTHS,
-                    assetNamePrefix: assetNamePrefix ?? ''
+                    assetNamePrefix: assetNamePrefix ?? '',
+                    loadFile: loadFile ?? DEFAULT_FILE_LOADER
                 };
         }
 
-        return { outputFormats: DEFAULT_FORMATS, outputWidths: DEFAULT_WIDTHS, assetNamePrefix: '' };
+        return {
+            outputFormats: DEFAULT_FORMATS,
+            outputWidths: DEFAULT_WIDTHS,
+            assetNamePrefix: '',
+            loadFile: DEFAULT_FILE_LOADER
+        };
     }
 
     let viteCommand: 'build' | 'serve' = 'serve';
@@ -95,13 +123,13 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
 
             const config = findConfig(url.pathname + url.search);
 
-            const original = await readFile(idWithoutParams);
+            const { contents: original } = await config.loadFile.call(this, id);
 
             if (viteCommand === 'serve') {
                 // we just serve the image during dev server operation
 
                 const mimeType = mime.getType(idWithoutParams) ?? '';
-                const dataURL = `data:${mimeType};base64,${original.toString('base64')}`;
+                const dataURL = `data:${mimeType};base64,${Buffer.from(original).toString('base64')}`;
 
                 return {
                     code: `const imgUrl = "${dataURL}";
