@@ -46,7 +46,6 @@
   "author": "Jonas Schade <derzade@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@types/mime": "^3.0.4",
     "@types/node": "^20.11.16",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "eslint-config-prettier": "^9.1.0",
@@ -59,7 +58,7 @@
     "vite": "4 - 5"
   },
   "dependencies": {
-    "mime": "^3.0.0",
+    "mime": "^4.0.4",
     "sharp": "^0.33.2"
   }
 }
