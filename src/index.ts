@@ -1,7 +1,7 @@
 import { createFilter, type Plugin } from 'vite';
 import { ESLiteral, toESString } from './utils/toESString';
 import { readFile } from 'node:fs/promises';
-import { parse, basename } from 'node:path';
+import { parse } from 'node:path';
 import sharp from 'sharp';
 import mime from 'mime';
 
@@ -95,12 +95,16 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
 
             const config = findConfig(idWithoutParams);
 
-            const importPath = './' + basename(idWithoutParams);
+            const original = await readFile(idWithoutParams);
 
             if (viteCommand === 'serve') {
                 // we just serve the image during dev server operation
+
+                const mimeType = mime.getType(idWithoutParams) ?? '';
+                const dataURL = `data:${mimeType};base64,${original.toString('base64')}`;
+
                 return {
-                    code: `import imgUrl from '${importPath}?url';
+                    code: `const imgUrl = "${dataURL}";
     
                     export default ${toESString({
                         sources: [
@@ -108,7 +112,7 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
                                 srcset: ESLiteral(
                                     '`' + config.outputWidths.map((w) => `\${imgUrl} ${w}w`).join(', ') + '`'
                                 ),
-                                type: mime.getType(idWithoutParams) ?? ''
+                                type: mimeType
                             }
                         ],
                         fallback: ESLiteral('imgUrl')
@@ -117,7 +121,6 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
             }
 
             const widths = config.outputWidths.sort((a, b) => a - b);
-            const original = await readFile(idWithoutParams);
 
             const baseName = parse(id).name;
             const getName = (width: number, format: string) =>
