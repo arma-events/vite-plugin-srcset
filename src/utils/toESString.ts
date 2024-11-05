@@ -1,6 +1,5 @@
 const ES_LITERAL_SYMBOL = Symbol('ESLiteral');
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export type ESLiteral = string;
 
 export function ESLiteral(x: string): ESLiteral {
