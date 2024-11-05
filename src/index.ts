@@ -15,8 +15,6 @@ export interface ModuleExport {
 const DEFAULT_WIDTHS = [64, 128, 256, 512, 1024];
 const DEFAULT_FORMATS = { png: true, webp: true };
 
-export const SUFFIX = '?srcset';
-
 export async function renderImg(
     original: Buffer,
     width: number,
@@ -89,11 +87,13 @@ export default function srcsetPlugin(options: SrcsetPluginConfig = []): Plugin {
             viteCommand = command;
         },
         async load(id) {
-            if (!id.endsWith(SUFFIX)) return null;
+            const url = new URL(id, import.meta.url);
+            if (url.searchParams.get('srcset') === null) return null;
 
-            const idWithoutParams = new URL(id, import.meta.url).pathname;
+            url.searchParams.delete('srcset');
+            const idWithoutParams = url.pathname;
 
-            const config = findConfig(idWithoutParams);
+            const config = findConfig(url.pathname + url.search);
 
             const original = await readFile(idWithoutParams);
 
