@@ -1,4 +1,4 @@
-import { createFilter, type Plugin } from 'vite';
+import { createFilter, normalizePath, type Plugin } from 'vite';
 import { ESLiteral, toESString } from './utils/toESString';
 import { readFile } from 'node:fs/promises';
 import { parse } from 'node:path';
@@ -12,10 +12,21 @@ export interface ModuleExport {
     // all: Record<ImageType, Record<number, string>>;
 }
 
+export function stripSrcsetQuery(id: string, query = 'srcset'): string {
+    const url = new URL(id, import.meta.url);
+    const oldSearch = url.search;
+    url.searchParams.delete(query);
+    const newSearch = url.search;
+
+    return id.replace(oldSearch, newSearch);
+}
+
 const DEFAULT_WIDTHS = [64, 128, 256, 512, 1024];
 const DEFAULT_FORMATS = { png: true, webp: true };
-const DEFAULT_FILE_LOADER = (id: string): Promise<{ contents: Uint8Array }> =>
-    readFile(new URL(id, import.meta.url).pathname).then((contents) => ({ contents }));
+const DEFAULT_FILE_LOADER = (id: string): Promise<{ contents: Uint8Array }> => {
+    const path = normalizePath(stripSrcsetQuery(id));
+    return readFile(path).then((contents) => ({ contents }));
+};
 
 export async function renderImg(
     original: Uint8Array,
@@ -121,7 +132,9 @@ export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
             url.searchParams.delete('srcset');
             const idWithoutParams = url.pathname;
 
-            const config = findConfig(url.pathname + url.search);
+            const normalizedId = normalizePath(stripSrcsetQuery(id));
+
+            const config = findConfig(normalizedId);
 
             const { contents: original } = await config.loadFile.call(this, id);
 

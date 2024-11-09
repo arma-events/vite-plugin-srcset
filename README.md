@@ -112,8 +112,13 @@ Overwrite the default file loader.
 This can be useful if you want to modify or process the file before generating srcsets.
 For example, you could change the fill color in an SVG from black to white:
 ```ts
+import { stripSrcsetQuery } from 'vite-plugin-srcset';
+import { normalizePath } from 'vite';
+
 async function loadFile(id: string) {
-    const fsPath = new URL(id, import.meta.url).pathname; // id includes all search params (including srcset), which we don't care about here
+    // id includes all search params (including srcset), which we don't care about here
+    // in this example we'll strip the `srcset` as well as the `dark` query
+    const fsPath = normalizePath(stripSrcsetQuery(stripSrcsetQuery(id, 'dark')));
     let text = await readFile(fsPath, 'utf-8');
     text = text.replaceAll('fill="#000000"', 'fill="#FFFFFF"');
     return { contents: Buffer.from(text, 'utf-8') };
