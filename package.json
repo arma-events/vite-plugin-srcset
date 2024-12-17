@@ -58,7 +58,7 @@
     "unbuild": "^2.0.0"
   },
   "peerDependencies": {
-    "vite": "4 - 5"
+    "vite": "4 - 6"
   },
   "dependencies": {
     "mime": "^4.0.4",
