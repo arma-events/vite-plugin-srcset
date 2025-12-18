@@ -2,7 +2,7 @@ import { createFilter, normalizePath, type Plugin } from 'vite';
 import { ESLiteral, toESString } from './utils/toESString';
 import { readFile } from 'node:fs/promises';
 import { parse } from 'node:path';
-import sharp from 'sharp';
+import sharp, { PngOptions, JpegOptions, WebpOptions, AvifOptions, JxlOptions } from 'sharp';
 import mime from 'mime';
 
 export interface ModuleExport {
@@ -28,16 +28,38 @@ const DEFAULT_FILE_LOADER = (id: string): Promise<{ contents: Uint8Array }> => {
     return readFile(path).then((contents) => ({ contents }));
 };
 
-export async function renderImg(
+const DEFAULT_RENDER_OPTIONS = { effort: 4 };
+
+export async function renderImg<T extends keyof OutputOptionsByFormat>(
     original: Uint8Array,
     width: number,
-    format: 'png' | 'jpeg' | 'webp' | 'avif' | 'jxl'
+    format: T,
+    optionsByFormat: OutputOptionsByFormat
 ): Promise<Uint8Array> {
-    return sharp(original).resize(width)[format]({ quality: 100, lossless: true }).toBuffer();
+    return sharp(original)
+        .resize(width)
+        [format](
+            optionsByFormat[format] === undefined
+                ? DEFAULT_RENDER_OPTIONS
+                : typeof optionsByFormat[format] === 'function'
+                  ? optionsByFormat[format](width)
+                  : optionsByFormat[format]
+        )
+        .toBuffer();
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PluginContext = ThisParameterType<Extract<Plugin['load'], (...params: any[]) => any>>;
+
+type OutputOptions<T> = T | ((width: number) => T);
+
+export type OutputOptionsByFormat = {
+    png?: OutputOptions<PngOptions>;
+    webp?: OutputOptions<WebpOptions>;
+    jpeg?: OutputOptions<JpegOptions>;
+    avif?: OutputOptions<AvifOptions>;
+    jxl?: OutputOptions<JxlOptions>;
+};
 
 type SrcsetPluginConfig = Array<{
     /**
@@ -76,6 +98,22 @@ type SrcsetPluginConfig = Array<{
     assetNamePrefix?: string;
 
     /**
+     * Options to pass per format to render image.
+     * This can either be a static options object, or a function that receives the width and returns options.
+     *
+     * If not specified, default options will be used, which are `{ effort: 4 }`
+     *
+     * @default {}
+     */
+    outputOptionsByFormat?: {
+        png?: OutputOptions<PngOptions>;
+        webp?: OutputOptions<WebpOptions>;
+        jpeg?: OutputOptions<JpegOptions>;
+        avif?: OutputOptions<AvifOptions>;
+        jxl?: OutputOptions<JxlOptions>;
+    };
+
+    /**
      * Overwrite the default file loader. This can be useful if you want to modify or process the file
      * before generating srcsets.
      * @param {string} id Id of file to load (includes srcset search param as well as all other search params)
@@ -96,8 +134,21 @@ type SrcsetPluginConfig = Array<{
 export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
     function findConfig(
         id: string
-    ): Required<Pick<SrcsetPluginConfig[number], 'outputFormats' | 'outputWidths' | 'assetNamePrefix' | 'loadFile'>> {
-        for (const { exclude, include, outputFormats, outputWidths, assetNamePrefix, loadFile } of options) {
+    ): Required<
+        Pick<
+            SrcsetPluginConfig[number],
+            'outputFormats' | 'outputWidths' | 'outputOptionsByFormat' | 'assetNamePrefix' | 'loadFile'
+        >
+    > {
+        for (const {
+            exclude,
+            include,
+            outputFormats,
+            outputWidths,
+            assetNamePrefix,
+            outputOptionsByFormat,
+            loadFile
+        } of options) {
             const filter = createFilter(include, exclude);
 
             if (filter(id))
@@ -105,6 +156,7 @@ export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
                     outputFormats: outputFormats ?? DEFAULT_FORMATS,
                     outputWidths: outputWidths ?? DEFAULT_WIDTHS,
                     assetNamePrefix: assetNamePrefix ?? '',
+                    outputOptionsByFormat: outputOptionsByFormat ?? {},
                     loadFile: loadFile ?? DEFAULT_FILE_LOADER
                 };
         }
@@ -113,6 +165,7 @@ export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
             outputFormats: DEFAULT_FORMATS,
             outputWidths: DEFAULT_WIDTHS,
             assetNamePrefix: '',
+            outputOptionsByFormat: {},
             loadFile: DEFAULT_FILE_LOADER
         };
     }
@@ -173,7 +226,7 @@ export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
                     type: `image/${format}` as const,
                     srcset: await Promise.all(
                         widths.map(async (w) => {
-                            const buffer = await renderImg(original, w, format);
+                            const buffer = await renderImg(original, w, format, config.outputOptionsByFormat);
                             const ref = this.emitFile({ type: 'asset', name: getName(w, format), source: buffer });
 
                             return { w, ref };

@@ -124,3 +124,34 @@ async function loadFile(id: string) {
     return { contents: Buffer.from(text, 'utf-8') };
 }
 ```
+
+#### `outputOptionsByFormat`
+
+Type: `{ png?: OutputOptions<PngOptions>; webp?: OutputOptions<WebpOptions>; jpeg?: OutputOptions<JpegOptions>; avif?: OutputOptions<AvifOptions>; jxl?: OutputOptions<JxlOptions>; }`  
+Default: Object with `{ effort: 4 }` for every format
+
+This project uses [`sharp`](https://github.com/lovell/sharp) under the hood to read the original, resize and write the output images.  
+This option allows you to set which [output options](https://sharp.pixelplumbing.com/api-output/#jpeg) are passed to `sharp`. These output options usually configure the compression effort, if metadata should be preserved or the output quality of the rendered image.
+
+Each format can be either include the output options directly or a function that is passed the width and returns the options. Please check out [sharps documentation](https://sharp.pixelplumbing.com/api-output/) for a full list of options.  
+
+Example:
+```ts
+// vite.config.ts
+
+import { defineConfig } from 'vite';
+import srcset from 'vite-plugin-srcset';
+
+export default defineConfig({
+    plugins: [srcset(
+        {
+            // [...]
+            outputOptionsByFormat: {
+                png: { compressionLevel: 9 },
+                webp: (width) => width < 256 ? { quality: 100 } : { quality: 80 } 
+            }
+        },
+        // [...]
+    )]
+});
+```
