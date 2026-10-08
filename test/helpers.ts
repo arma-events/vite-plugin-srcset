@@ -75,7 +75,7 @@ export async function buildFixture(plugin: Plugin): Promise<BuildResult> {
 }
 
 /**
- * Rollup (Vite 4 - 7) resolves `import.meta.ROLLUP_FILE_URL_*` to `new URL('<file>', import.meta.url).href`,
+ * Rollup (Vite 6 - 7) resolves `import.meta.ROLLUP_FILE_URL_*` to `new URL('<file>', import.meta.url).href`,
  * Rolldown (Vite 8) to `'<base><file>'`. Reduce both to the emitted file name.
  */
 function toFileName(url: string, outDir: string): string {

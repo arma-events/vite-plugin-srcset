@@ -81,7 +81,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                vite: ['4', '5', '6', '7', '8']
+                vite: ['6', '7', '8']
         name: test (vite ${{ matrix.vite }})
         steps:
             - uses: actions/checkout@v7

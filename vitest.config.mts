@@ -2,18 +2,17 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { defineConfig } from 'vitest/config';
 
-/** Every supported Vite major is installed as an aliased copy (`vite4` as `npm:vite@4`, ...) */
-const VITE_VERSIONS = ['4', '5', '6', '7', '8'];
+/** Every supported Vite major is installed as an aliased copy (`vite6` as `npm:vite@6`, ...) */
+const VITE_VERSIONS = ['6', '7', '8'];
 
 /** Resolve the ESM entry point of an aliased Vite copy */
 function resolveAliasedVite(version: string): string {
     const pkgDir = join(import.meta.dirname, 'node_modules', `vite${version}`);
     const pkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf-8'));
 
-    // Vite 4: { import: string }, Vite 5: { import: { default: string } }, Vite 6: { import: string }, Vite 7+: string
+    // Vite 6: { import: string }, Vite 7+: string
     let entry = pkg.exports['.'];
     if (typeof entry !== 'string') entry = entry.import;
-    if (typeof entry !== 'string') entry = entry.default;
 
     return join(pkgDir, entry);
 }
