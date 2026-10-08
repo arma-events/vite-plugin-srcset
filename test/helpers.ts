@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { build, type Plugin } from 'vite';
+import { build, type Plugin, type UserConfig } from 'vite';
 import sharp from 'sharp';
 import type { ModuleExport } from '../src/index';
 
@@ -23,7 +23,7 @@ export interface BuildResult {
     assets: Record<string, string>;
     /** Contents of every emitted asset by file name */
     assetSources: Record<string, Uint8Array>;
-    /** The entry module of the build, with the asset URLs reduced to the emitted file names */
+    /** The exports of the entry module of the build */
     modules: Record<string, ModuleExport>;
 }
 
@@ -42,6 +42,7 @@ export interface BuildOptions {
  */
 export async function buildFixture(
     plugin: Plugin,
+    config: UserConfig = {},
     { entry = 'main.ts', hashed = false }: BuildOptions = {}
 ): Promise<BuildResult> {
     const outDir = await mkdtemp(join(tmpdir(), 'vite-plugin-srcset-'));
@@ -52,6 +53,7 @@ export async function buildFixture(
             configFile: false,
             logLevel: 'silent',
             plugins: [plugin],
+            ...config,
             build: {
                 outDir,
                 emptyOutDir: false,
@@ -79,44 +81,12 @@ export async function buildFixture(
         }
 
         const entryChunk = output.find((o) => o.type === 'chunk' && o.isEntry)!;
-        const exports = (await import(pathToFileURL(join(outDir, entryChunk.fileName)).href)) as BuildResult['modules'];
-        const modules: BuildResult['modules'] = {};
-        for (const [name, module] of Object.entries(exports)) {
-            modules[name] = normalizeModule(module, outDir);
-        }
+        const modules = (await import(pathToFileURL(join(outDir, entryChunk.fileName)).href)) as BuildResult['modules'];
 
         return { assets, assetSources, modules };
     } finally {
         await rm(outDir, { recursive: true, force: true });
     }
-}
-
-/**
- * Rollup (Vite 6 - 7) resolves `import.meta.ROLLUP_FILE_URL_*` to `new URL('<file>', import.meta.url).href`,
- * Rolldown (Vite 8) to `'<base><file>'`. Reduce both to the emitted file name.
- */
-function toFileName(url: string, outDir: string): string {
-    const outDirUrl = pathToFileURL(outDir).href + '/';
-    if (url.startsWith(outDirUrl)) return url.slice(outDirUrl.length);
-    if (url.startsWith('/')) return url.slice(1);
-
-    throw new Error(`Unexpected asset URL: ${url}`);
-}
-
-function normalizeModule({ sources, fallback }: ModuleExport, outDir: string): ModuleExport {
-    return {
-        sources: sources.map(({ type, srcset }) => ({
-            type,
-            srcset: srcset
-                .split(', ')
-                .map((candidate) => {
-                    const [url, descriptor] = candidate.split(' ');
-                    return `${toFileName(url, outDir)} ${descriptor}`;
-                })
-                .join(', ')
-        })),
-        fallback: toFileName(fallback, outDir)
-    };
 }
 
 /** Serialize a build result for a file snapshot */

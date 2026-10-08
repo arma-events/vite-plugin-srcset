@@ -14,27 +14,27 @@
             "sources": [
                 {
                     "type": "image/avif",
-                    "srcset": "img-favicon_24.avif 24w, img-favicon_48.avif 48w"
+                    "srcset": "/img-favicon_24.avif 24w, /img-favicon_48.avif 48w"
                 },
                 {
                     "type": "image/jpeg",
-                    "srcset": "img-favicon_24.jpeg 24w, img-favicon_48.jpeg 48w"
+                    "srcset": "/img-favicon_24.jpeg 24w, /img-favicon_48.jpeg 48w"
                 }
             ],
-            "fallback": "img-favicon_48.jpeg"
+            "fallback": "/img-favicon_48.jpeg"
         },
         "pwa192": {
             "sources": [
                 {
                     "type": "image/avif",
-                    "srcset": "img-pwa-192x192_24.avif 24w, img-pwa-192x192_48.avif 48w"
+                    "srcset": "/img-pwa-192x192_24.avif 24w, /img-pwa-192x192_48.avif 48w"
                 },
                 {
                     "type": "image/jpeg",
-                    "srcset": "img-pwa-192x192_24.jpeg 24w, img-pwa-192x192_48.jpeg 48w"
+                    "srcset": "/img-pwa-192x192_24.jpeg 24w, /img-pwa-192x192_48.jpeg 48w"
                 }
             ],
-            "fallback": "img-pwa-192x192_48.jpeg"
+            "fallback": "/img-pwa-192x192_48.jpeg"
         }
     }
 }

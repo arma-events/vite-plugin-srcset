@@ -35,7 +35,7 @@ describe('vite build', () => {
             'image/jpeg',
             'image/png'
         ]);
-        expect(modules.favicon.fallback).toBe('favicon_16.png');
+        expect(modules.favicon.fallback).toBe('/favicon_16.png');
     });
 
     it('does not modify the given outputWidths', async () => {
@@ -68,7 +68,7 @@ describe('vite build', () => {
     });
 
     it('emits hashed files into the assets directory in an app build', async () => {
-        const { assets, modules } = await buildFixture(srcset(), { hashed: true });
+        const { assets, modules } = await buildFixture(srcset(), {}, { hashed: true });
 
         expect(Object.keys(assets)).toHaveLength(2 * 2 * 5);
         for (const file of Object.keys(assets)) {
@@ -77,23 +77,85 @@ describe('vite build', () => {
 
         for (const { sources, fallback } of Object.values(modules)) {
             for (const { srcset } of sources) {
-                for (const candidate of srcset.split(', ')) expect(assets).toHaveProperty([candidate.split(' ')[0]]);
+                for (const candidate of srcset.split(', '))
+                    expect(assets).toHaveProperty([candidate.split(' ')[0].slice(1)]);
             }
-            expect(assets[fallback]).toBe('png 1024x1024');
+            expect(assets[fallback.slice(1)]).toBe('png 1024x1024');
         }
     });
 
-    it('keeps images with the same file name apart', async () => {
-        const { assets, assetSources, modules } = await buildFixture(
-            srcset({ outputFormats: { png: true }, outputWidths: [16] }),
-            { entry: 'entries/dirs.ts' }
-        );
+    describe('asset URLs', () => {
+        const options: Parameters<typeof srcset>[0] = { outputFormats: { png: true }, outputWidths: [16] };
 
-        // both are named `logo_16.png`, so one of them gets a numeric suffix (which one depends on the Vite version)
-        expect(Object.keys(assets)).toHaveLength(2);
-        expect(modules.green.fallback).not.toBe(modules.red.fallback);
-        const [green, red] = [modules.green, modules.red].map((m) => assetSources[m.fallback]);
-        expect(Buffer.compare(green, red)).not.toBe(0);
+        it('are absolute paths by default', async () => {
+            const { modules } = await buildFixture(srcset(options));
+
+            expect(modules.favicon).toEqual({
+                sources: [{ type: 'image/png', srcset: '/favicon_16.png 16w' }],
+                fallback: '/favicon_16.png'
+            });
+        });
+
+        it('respect the base option', async () => {
+            const { modules } = await buildFixture(srcset(options), { base: '/static/' });
+
+            expect(modules.favicon.sources[0].srcset).toBe('/static/favicon_16.png 16w');
+            expect(modules.favicon.fallback).toBe('/static/favicon_16.png');
+        });
+
+        it('respect an absolute base option', async () => {
+            const { modules } = await buildFixture(srcset(options), { base: 'https://cdn.test/assets/' });
+
+            expect(modules.pwa192.sources[0].srcset).toBe('https://cdn.test/assets/pwa-192x192_16.png 16w');
+            expect(modules.pwa192.fallback).toBe('https://cdn.test/assets/pwa-192x192_16.png');
+        });
+
+        it('respect experimental.renderBuiltUrl', async () => {
+            const { modules } = await buildFixture(srcset(options), {
+                experimental: { renderBuiltUrl: (file) => `https://cdn.test/${file}` }
+            });
+
+            expect(modules.favicon.sources[0].srcset).toBe('https://cdn.test/favicon_16.png 16w');
+            expect(modules.favicon.fallback).toBe('https://cdn.test/favicon_16.png');
+        });
+    });
+
+    describe('images in other directories', () => {
+        const options: Parameters<typeof srcset>[0] = { outputFormats: { png: true }, outputWidths: [16] };
+        const entry = 'entries/dirs.ts';
+
+        it('keeps images with the same file name apart', async () => {
+            const { assets, assetSources, modules } = await buildFixture(srcset(options), {}, { entry });
+
+            // both are named `logo_16.png`, so one of them gets a numeric suffix (which one depends on the Vite version)
+            expect(Object.keys(assets)).toHaveLength(2);
+            expect(modules.green.fallback).not.toBe(modules.red.fallback);
+            const [green, red] = [modules.green, modules.red].map((m) => assetSources[m.fallback.slice(1)]);
+            expect(Buffer.compare(green, red)).not.toBe(0);
+        });
+
+        it('emits hashed files into the assets directory in an app build', async () => {
+            const { assets, modules } = await buildFixture(srcset(options), {}, { entry, hashed: true });
+
+            const files = Object.keys(assets);
+            expect(files).toHaveLength(2);
+            for (const file of files) expect(file).toMatch(/^assets\/logo_16-[\w-]{8}\.png$/);
+            expect(modules.green.fallback).not.toBe(modules.red.fallback);
+            expect(files).toContain(modules.green.fallback.slice(1));
+            expect(files).toContain(modules.red.fallback.slice(1));
+            expect(modules.green.fallback).toMatch(/^\/assets\/logo_16-[\w-]{8}\.png$/);
+        });
+
+        it('puts the assetNamePrefix into the output path', async () => {
+            const { assets, modules } = await buildFixture(
+                srcset({ ...options, assetNamePrefix: 'icons/' }),
+                { base: '/static/' },
+                { entry, hashed: true }
+            );
+
+            for (const file of Object.keys(assets)) expect(file).toMatch(/^assets\/icons\/logo_16-[\w-]{8}\.png$/);
+            expect(modules.green.fallback).toMatch(/^\/static\/assets\/icons\/logo_16-[\w-]{8}\.png$/);
+        });
     });
 
     describe('outputOptionsByFormat', () => {

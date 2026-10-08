@@ -242,19 +242,17 @@ export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
                 this.error(`No output formats / sizes configured for ${idWithoutParams}.`);
             }
 
+            // `__VITE_ASSET__<ref>__` is the placeholder Vite replaces with the final URL of an emitted asset
+            // (the same way it does for imported assets). Unlike `import.meta.ROLLUP_FILE_URL_<ref>`, this
+            // respects `base` and `experimental.renderBuiltUrl`, and doesn't depend on where the module is
+            // loaded from. The placeholder has to stay inside a double quoted string.
             return {
-                code: `export default ${toESString({
+                code: `export default ${JSON.stringify({
                     sources: output.map((x) => ({
                         type: x.type,
-                        srcset: ESLiteral(
-                            '`' +
-                                x.srcset
-                                    .map(({ w, ref }) => `\${import.meta.ROLLUP_FILE_URL_${ref}} ${w}w`)
-                                    .join(', ') +
-                                '`'
-                        )
+                        srcset: x.srcset.map(({ w, ref }) => `__VITE_ASSET__${ref}__ ${w}w`).join(', ')
                     })),
-                    fallback: ESLiteral(`import.meta.ROLLUP_FILE_URL_${fallbackRef}`)
+                    fallback: `__VITE_ASSET__${fallbackRef}__`
                 } satisfies ModuleExport)}`
             };
         }
