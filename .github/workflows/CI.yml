@@ -95,5 +95,5 @@ jobs:
               run: npm ci --ignore-scripts
 
             - name: Run tests
-              # one vitest project per vite major, see vitest.config.mts
+              # one vitest project per vite major, see vitest.config.ts
               run: npm test -- --project vite${{ matrix.vite }}
