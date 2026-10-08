@@ -1,3 +1,6 @@
 const imgUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iIzRGOUQ2OSIgZD0iTTcuOTExLjcwM0ExIDEgMCAwIDEgOC44NjYgMGg3LjY2MmExIDEgMCAwIDEgLjk1NSAxLjI5N2wtNy40NTUgMjRhMSAxIDAgMCAxLS45NTUuNzAzSDEuNDFhMSAxIDAgMCAxLS45NTUtMS4yOTdsNy40NTUtMjRaIi8+PHBhdGggZmlsbD0iIzBBMDkwOCIgZD0ibTE0LjEwMiAxOC42MTkgMi4xMTkgNi42ODNhMSAxIDAgMCAwIC45NTMuNjk4aDcuNDE0YTEgMSAwIDAgMCAuOTUzLTEuMzAyTDE4LjgxIDMuNDY1bC00LjcwNyAxNS4xNTRaIi8+PC9zdmc+";
-    
-                    export default {"sources":[{"srcset":`${imgUrl} 64w, ${imgUrl} 128w, ${imgUrl} 256w, ${imgUrl} 512w, ${imgUrl} 1024w`,"type":"image/svg+xml"}],"fallback":imgUrl}
+
+                    export default {
+                        sources: [{ srcset: `${imgUrl} 64w, ${imgUrl} 128w, ${imgUrl} 256w, ${imgUrl} 512w, ${imgUrl} 1024w`, type: "image/svg+xml" }],
+                        fallback: imgUrl
+                    };

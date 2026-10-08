@@ -1,5 +1,4 @@
 import { createFilter, normalizePath, type Plugin } from 'vite';
-import { ESLiteral, toESString } from './utils/toESString';
 import { readFile } from 'node:fs/promises';
 import { parse } from 'node:path';
 import sharp, { PngOptions, JpegOptions, WebpOptions, AvifOptions, JxlOptions } from 'sharp';
@@ -197,20 +196,16 @@ export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
                 const mimeType = mime.getType(idWithoutParams) ?? '';
                 const dataURL = `data:${mimeType};base64,${Buffer.from(original).toString('base64')}`;
 
+                // the data URL is stored once and referenced from every `srcset` entry
+                const srcset = config.outputWidths.map((w) => `\${imgUrl} ${w}w`).join(', ');
+
                 return {
-                    code: `const imgUrl = "${dataURL}";
-    
-                    export default ${toESString({
-                        sources: [
-                            {
-                                srcset: ESLiteral(
-                                    '`' + config.outputWidths.map((w) => `\${imgUrl} ${w}w`).join(', ') + '`'
-                                ),
-                                type: mimeType
-                            }
-                        ],
-                        fallback: ESLiteral('imgUrl')
-                    } satisfies ModuleExport)}`
+                    code: `const imgUrl = ${JSON.stringify(dataURL)};
+
+                    export default {
+                        sources: [{ srcset: \`${srcset}\`, type: ${JSON.stringify(mimeType)} }],
+                        fallback: imgUrl
+                    };`
                 };
             }
 
