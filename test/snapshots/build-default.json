@@ -1,0 +1,52 @@
+{
+    "assets": {
+        "favicon_1024.png": "png 1024x1024",
+        "favicon_1024.webp": "webp 1024x1024",
+        "favicon_128.png": "png 128x128",
+        "favicon_128.webp": "webp 128x128",
+        "favicon_256.png": "png 256x256",
+        "favicon_256.webp": "webp 256x256",
+        "favicon_512.png": "png 512x512",
+        "favicon_512.webp": "webp 512x512",
+        "favicon_64.png": "png 64x64",
+        "favicon_64.webp": "webp 64x64",
+        "pwa-192x192_1024.png": "png 1024x1024",
+        "pwa-192x192_1024.webp": "webp 1024x1024",
+        "pwa-192x192_128.png": "png 128x128",
+        "pwa-192x192_128.webp": "webp 128x128",
+        "pwa-192x192_256.png": "png 256x256",
+        "pwa-192x192_256.webp": "webp 256x256",
+        "pwa-192x192_512.png": "png 512x512",
+        "pwa-192x192_512.webp": "webp 512x512",
+        "pwa-192x192_64.png": "png 64x64",
+        "pwa-192x192_64.webp": "webp 64x64"
+    },
+    "modules": {
+        "favicon": {
+            "sources": [
+                {
+                    "type": "image/webp",
+                    "srcset": "favicon_64.webp 64w, favicon_128.webp 128w, favicon_256.webp 256w, favicon_512.webp 512w, favicon_1024.webp 1024w"
+                },
+                {
+                    "type": "image/png",
+                    "srcset": "favicon_64.png 64w, favicon_128.png 128w, favicon_256.png 256w, favicon_512.png 512w, favicon_1024.png 1024w"
+                }
+            ],
+            "fallback": "favicon_1024.png"
+        },
+        "pwa192": {
+            "sources": [
+                {
+                    "type": "image/webp",
+                    "srcset": "pwa-192x192_64.webp 64w, pwa-192x192_128.webp 128w, pwa-192x192_256.webp 256w, pwa-192x192_512.webp 512w, pwa-192x192_1024.webp 1024w"
+                },
+                {
+                    "type": "image/png",
+                    "srcset": "pwa-192x192_64.png 64w, pwa-192x192_128.png 128w, pwa-192x192_256.png 256w, pwa-192x192_512.png 512w, pwa-192x192_1024.png 1024w"
+                }
+            ],
+            "fallback": "pwa-192x192_1024.png"
+        }
+    }
+}

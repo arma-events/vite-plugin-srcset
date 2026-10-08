@@ -1,0 +1,40 @@
+{
+    "assets": {
+        "img-favicon_24.avif": "heif 24x24",
+        "img-favicon_24.jpeg": "jpeg 24x24",
+        "img-favicon_48.avif": "heif 48x48",
+        "img-favicon_48.jpeg": "jpeg 48x48",
+        "img-pwa-192x192_24.avif": "heif 24x24",
+        "img-pwa-192x192_24.jpeg": "jpeg 24x24",
+        "img-pwa-192x192_48.avif": "heif 48x48",
+        "img-pwa-192x192_48.jpeg": "jpeg 48x48"
+    },
+    "modules": {
+        "favicon": {
+            "sources": [
+                {
+                    "type": "image/avif",
+                    "srcset": "img-favicon_24.avif 24w, img-favicon_48.avif 48w"
+                },
+                {
+                    "type": "image/jpeg",
+                    "srcset": "img-favicon_24.jpeg 24w, img-favicon_48.jpeg 48w"
+                }
+            ],
+            "fallback": "img-favicon_48.jpeg"
+        },
+        "pwa192": {
+            "sources": [
+                {
+                    "type": "image/avif",
+                    "srcset": "img-pwa-192x192_24.avif 24w, img-pwa-192x192_48.avif 48w"
+                },
+                {
+                    "type": "image/jpeg",
+                    "srcset": "img-pwa-192x192_24.jpeg 24w, img-pwa-192x192_48.jpeg 48w"
+                }
+            ],
+            "fallback": "img-pwa-192x192_48.jpeg"
+        }
+    }
+}

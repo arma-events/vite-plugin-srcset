@@ -75,3 +75,25 @@ jobs:
 
             - name: Build app
               run: npm run-script type-check
+
+    test:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                vite: ['4', '5', '6', '7', '8']
+        name: test (vite ${{ matrix.vite }})
+        steps:
+            - uses: actions/checkout@v7
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 26
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci --ignore-scripts
+
+            - name: Run tests
+              # one vitest project per vite major, see vitest.config.mts
+              run: npm test -- --project vite${{ matrix.vite }}

@@ -31,10 +31,11 @@
   },
   "scripts": {
     "build": "unbuild",
-    "lint": "eslint ./src",
+    "lint": "eslint ./src ./test",
     "fmt": "prettier --write .",
     "type-check": "tsc --noEmit",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "test": "vitest run"
   },
   "keywords": [
     "vite",
@@ -54,7 +55,14 @@
     "prettier": "^3.9.9",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.1",
-    "unbuild": "^3.6.1"
+    "unbuild": "^3.6.1",
+    "vite": "^8.3.4",
+    "vite4": "npm:vite@^4.5.14",
+    "vite5": "npm:vite@^5.4.21",
+    "vite6": "npm:vite@^6.4.4",
+    "vite7": "npm:vite@^7.3.7",
+    "vite8": "npm:vite@^8.3.4",
+    "vitest": "^5.0.3"
   },
   "peerDependencies": {
     "vite": "4 - 8"
