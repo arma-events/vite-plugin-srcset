@@ -38,6 +38,13 @@ describe('vite build', () => {
         expect(modules.favicon.fallback).toBe('favicon_16.png');
     });
 
+    it('does not modify the given outputWidths', async () => {
+        const outputWidths = [16, 8];
+        await buildFixture(srcset({ outputFormats: { png: true }, outputWidths }));
+
+        expect(outputWidths).toEqual([16, 8]);
+    });
+
     it('uses the first config matching the image', async () => {
         const { assets } = await buildFixture(
             srcset(

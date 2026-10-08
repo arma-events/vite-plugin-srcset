@@ -214,7 +214,7 @@ export default function srcsetPlugin(...options: SrcsetPluginConfig): Plugin {
                 };
             }
 
-            const widths = config.outputWidths.sort((a, b) => a - b);
+            const widths = [...config.outputWidths].sort((a, b) => a - b);
 
             const baseName = parse(id).name;
             const getName = (width: number, format: string) =>
