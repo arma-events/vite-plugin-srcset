@@ -23,6 +23,21 @@ describe('vite build', () => {
         await expect(serialize(result)).toMatchFileSnapshot('./snapshots/build-options.json');
     });
 
+    it('orders the sources by format and uses the largest image of the last format as fallback', async () => {
+        const { modules } = await buildFixture(
+            // the order of the options must not matter
+            srcset({ outputFormats: { png: true, jpeg: true, webp: true, avif: true }, outputWidths: [16, 8] })
+        );
+
+        expect(modules.favicon.sources.map((s) => s.type)).toEqual([
+            'image/avif',
+            'image/webp',
+            'image/jpeg',
+            'image/png'
+        ]);
+        expect(modules.favicon.fallback).toBe('favicon_16.png');
+    });
+
     it('uses the first config matching the image', async () => {
         const { assets } = await buildFixture(
             srcset(
@@ -43,6 +58,35 @@ describe('vite build', () => {
         expect(Object.keys(assets)).toHaveLength(2 * 2 * 5);
         expect(assets['favicon_64.png']).toBe('png 64x64');
         expect(assets['pwa-192x192_1024.webp']).toBe('webp 1024x1024');
+    });
+
+    it('emits hashed files into the assets directory in an app build', async () => {
+        const { assets, modules } = await buildFixture(srcset(), { hashed: true });
+
+        expect(Object.keys(assets)).toHaveLength(2 * 2 * 5);
+        for (const file of Object.keys(assets)) {
+            expect(file).toMatch(/^assets\/(favicon|pwa-192x192)_\d+-[\w-]{8}\.(png|webp)$/);
+        }
+
+        for (const { sources, fallback } of Object.values(modules)) {
+            for (const { srcset } of sources) {
+                for (const candidate of srcset.split(', ')) expect(assets).toHaveProperty([candidate.split(' ')[0]]);
+            }
+            expect(assets[fallback]).toBe('png 1024x1024');
+        }
+    });
+
+    it('keeps images with the same file name apart', async () => {
+        const { assets, assetSources, modules } = await buildFixture(
+            srcset({ outputFormats: { png: true }, outputWidths: [16] }),
+            { entry: 'entries/dirs.ts' }
+        );
+
+        // both are named `logo_16.png`, so one of them gets a numeric suffix (which one depends on the Vite version)
+        expect(Object.keys(assets)).toHaveLength(2);
+        expect(modules.green.fallback).not.toBe(modules.red.fallback);
+        const [green, red] = [modules.green, modules.red].map((m) => assetSources[m.fallback]);
+        expect(Buffer.compare(green, red)).not.toBe(0);
     });
 
     describe('outputOptionsByFormat', () => {

@@ -14,7 +14,9 @@ export const FIXTURE_IMAGES = {
     pwa192: 'pwa-192x192.png'
 } as const;
 
-type Output = { type: 'chunk'; code: string } | { type: 'asset'; fileName: string; source: string | Uint8Array };
+type Output =
+    | { type: 'chunk'; fileName: string; isEntry: boolean }
+    | { type: 'asset'; fileName: string; source: string | Uint8Array };
 
 export interface BuildResult {
     /** `<format> <width>x<height>` of every emitted asset by file name, sorted by file name */
@@ -22,16 +24,26 @@ export interface BuildResult {
     /** Contents of every emitted asset by file name */
     assetSources: Record<string, Uint8Array>;
     /** The entry module of the build, with the asset URLs reduced to the emitted file names */
-    modules: Record<keyof typeof FIXTURE_IMAGES, ModuleExport>;
+    modules: Record<string, ModuleExport>;
+}
+
+export interface BuildOptions {
+    /** Entry of the build, relative to the fixture. @default 'main.ts' */
+    entry?: string;
+    /** Use Vite's default asset names (`assets/<name>-<hash>.<ext>`) instead of `<name>.<ext>`. @default false */
+    hashed?: boolean;
 }
 
 /**
  * Build the fixture with the given plugin into a temporary directory and import the result.
  *
- * The fixture is built as a library: an app build has no use for the exports of its entry
- * and would drop the side-effect free srcset modules entirely.
+ * The entry's exports are preserved (library mode or `preserveEntrySignatures`), as an app build has
+ * no use for them and would drop the side-effect free srcset modules entirely.
  */
-export async function buildFixture(plugin: Plugin): Promise<BuildResult> {
+export async function buildFixture(
+    plugin: Plugin,
+    { entry = 'main.ts', hashed = false }: BuildOptions = {}
+): Promise<BuildResult> {
     const outDir = await mkdtemp(join(tmpdir(), 'vite-plugin-srcset-'));
 
     try {
@@ -44,8 +56,12 @@ export async function buildFixture(plugin: Plugin): Promise<BuildResult> {
                 outDir,
                 emptyOutDir: false,
                 minify: false,
-                lib: { entry: 'main.ts', formats: ['es'], fileName: () => 'main.mjs' },
-                rollupOptions: { output: { assetFileNames: '[name][extname]' } }
+                ...(hashed
+                    ? { rollupOptions: { input: join(FIXTURE_DIR, entry), preserveEntrySignatures: 'strict' } }
+                    : {
+                          lib: { entry, formats: ['es'], fileName: () => 'main.mjs' },
+                          rollupOptions: { output: { assetFileNames: '[name][extname]' } }
+                      })
             }
         });
 
@@ -62,10 +78,11 @@ export async function buildFixture(plugin: Plugin): Promise<BuildResult> {
             assetSources[file.fileName] = Buffer.from(file.source);
         }
 
-        const exports = (await import(pathToFileURL(join(outDir, 'main.mjs')).href)) as BuildResult['modules'];
-        const modules = {} as BuildResult['modules'];
-        for (const name of Object.keys(FIXTURE_IMAGES) as (keyof typeof FIXTURE_IMAGES)[]) {
-            modules[name] = normalizeModule(exports[name], outDir);
+        const entryChunk = output.find((o) => o.type === 'chunk' && o.isEntry)!;
+        const exports = (await import(pathToFileURL(join(outDir, entryChunk.fileName)).href)) as BuildResult['modules'];
+        const modules: BuildResult['modules'] = {};
+        for (const [name, module] of Object.entries(exports)) {
+            modules[name] = normalizeModule(module, outDir);
         }
 
         return { assets, assetSources, modules };
